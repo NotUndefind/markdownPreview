@@ -1,0 +1,22 @@
+.nav-item::after {
+	content: "";
+	position: absolute;
+	bottom: -1rem;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 110%;
+	height: 0;
+	border-bottom: 1px solid transparent;
+	box-shadow: 0 0 10px transparent, 0 0 15px transparent, 0 0 20px transparent;
+}
+
+.nav-item:hover::after {
+	box-shadow: 0 0 10px var(--foreground), 0 0 15px var(--foreground),
+		0 0 20px var(--foreground);
+	transition: all 0.3s ease-in-out;
+}
+
+.nav-item:hover {
+	text-shadow: 0 0 10px var(--foreground);
+	transition: all 0.3s ease-in-out;
+}

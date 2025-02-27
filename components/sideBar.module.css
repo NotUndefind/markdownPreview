@@ -1,0 +1,23 @@
+.side-item::after {
+	content: "";
+	position: absolute;
+	bottom: 50%;
+	right: -13px;
+	transform: translateY(50%);
+	width: 0;
+	height: 100%;
+	border-right: 1px solid transparent;
+	box-shadow: 0 0 10px transparent, 0 0 15px transparent, 0 0 20px transparent;
+}
+
+.side-item:hover::after {
+	border-right: 1px solid var(--foreground);
+	box-shadow: 0 0 10px var(--foreground), 0 0 15px var(--foreground),
+		0 0 20px var(--foreground);
+	transition: all 0.3s ease-in-out;
+}
+
+.side-item:hover {
+	text-shadow: 0 0 10px var(--foreground);
+	transition: all 0.3s ease-in-out;
+}
