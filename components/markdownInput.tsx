@@ -3,6 +3,7 @@ import React from "react";
 interface MarkdownInputProps {
 	value: string;
 	onChange: (value: string) => void;
+	newChat: boolean;
 }
 
 const MarkdownInput = ({ value, onChange }: MarkdownInputProps) => {
@@ -10,6 +11,11 @@ const MarkdownInput = ({ value, onChange }: MarkdownInputProps) => {
 		onChange(e.target.value);
 	};
 
+	const keyAnalyzer = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+		if (e.key === "Tab") {
+			e.isDefaultPrevented();
+		}
+	};
 	const lines = value.split("\n"); // Découpe la chaîne en lignes
 
 	return (
@@ -29,8 +35,8 @@ const MarkdownInput = ({ value, onChange }: MarkdownInputProps) => {
 						id="text"
 						className="bg-transparent text-white h-full w-full align-center focus:outline-none border-r border-t border-b border-l-0 border-white border-opacity-40 rounded-r-lg pl-2 font text-base"
 						onChange={handleChange}
+						onKeyDown={keyAnalyzer}
 						rows={lines.length || 1} // Évite d’avoir 0 ligne
-						placeholder="You can write here"
 						value={value} // On garde `value` en string
 					></textarea>
 				</div>
