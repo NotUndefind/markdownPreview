@@ -1,6 +1,6 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
-import React, { useRef, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 
 //Components
@@ -10,10 +10,9 @@ import MarkdownEditor from "@/components/markdownEditor";
 
 export default function App({ Component, pageProps }: AppProps) {
 	const [reset, setReset] = React.useState(false);
-	const [newChat, setNewChat] = React.useState(false);
-	const [title, setTitle] = React.useState("");
-	const idRef = useRef(0);
 	const defautText = `# Markdown syntax guide
+
+	const [newChat, setNewChat] = React.useState(false);
 
 ## Headers
 
@@ -70,6 +69,11 @@ This web site is using \`markedjs/marked\`.
 `;
 	const [text, setText] = useState<string>(defautText);
 
+	const [saveChat, setSaveChat] = useState<{ title: string; text: string }[]>(
+		[]
+	);
+	const [newChat, setNewChat] = useState(false);
+
 	useEffect(() => {
 		if (reset) {
 			setText(defautText);
@@ -77,24 +81,19 @@ This web site is using \`markedjs/marked\`.
 		}
 
 		if (newChat) {
-			setTitle(text.split("\n")[0]);
-			localStorage.setItem(
-				idRef.current.toString(),
-				JSON.stringify({ text: text, title: title })
-			);
-
+			const title = text.split("\n")[0];
+			setSaveChat([...saveChat, { title, text }]);
 			setNewChat(false);
-			idRef.current++;
 		}
-	}, [newChat, reset, defautText, text]);
+	}, [reset, newChat, saveChat]);
+
 	return (
 		<>
 			<NavBar setReset={setReset} newChat={setNewChat} />
 			<SideBar
 				newChat={newChat}
 				setNewChat={setNewChat}
-				title={title}
-				currentId={idRef.current}
+				actualSessionChats={saveChat}
 			/>
 			<MarkdownEditor text={text} setText={setText} newChat={newChat} />
 			<Component {...pageProps} />
