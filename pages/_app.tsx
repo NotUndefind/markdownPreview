@@ -8,11 +8,7 @@ import NavBar from "@/components/navBar";
 import SideBar from "@/components/sideBar";
 import MarkdownEditor from "@/components/markdownEditor";
 
-export default function App({ Component, pageProps }: AppProps) {
-	const [reset, setReset] = React.useState(false);
-	const defautText = `# Markdown syntax guide
-
-	const [newChat, setNewChat] = React.useState(false);
+const defautText = `# Markdown syntax guide
 
 ## Headers
 
@@ -67,12 +63,33 @@ alert(message);
 
 This web site is using \`markedjs/marked\`.
 `;
-	const [text, setText] = useState<string>(defautText);
+const chatMock = [
+	{
+		id: 1,
+		title: "Default",
+		text: defautText,
+	},
+];
 
-	const [saveChat, setSaveChat] = useState<{ title: string; text: string }[]>(
-		[]
-	);
+export default function App({ Component, pageProps }: AppProps) {
+	const [reset, setReset] = React.useState(false);
+	const [text, setText] = useState<string>(defautText);
 	const [newChat, setNewChat] = useState(false);
+	const [deleteAll, setDeleteAll] = useState(false);
+
+	const [activeChatId, setActiveChatId] = useState(chatMock[0].id);
+	const activeChat = chatMock.find((c) => c.id === activeChatId);
+	const [isReady, setIsReady] = useState(false);
+
+	useEffect(() => {
+		const storedChats = localStorage.getItem("chats");
+		if (storedChats) {
+			chatMock.push(...JSON.parse(storedChats));
+			console.log(chatMock);
+		}
+
+		setIsReady(true);
+	}, []);
 
 	useEffect(() => {
 		if (reset) {
@@ -82,18 +99,50 @@ This web site is using \`markedjs/marked\`.
 
 		if (newChat) {
 			const title = text.split("\n")[0];
-			setSaveChat([...saveChat, { title, text }]);
+			chatMock.push({
+				id: chatMock.length + 1,
+				title: title,
+				text: text,
+			});
+			setActiveChatId(chatMock.length);
 			setNewChat(false);
 		}
-	}, [reset, newChat, saveChat]);
+
+		if (deleteAll) {
+			localStorage.removeItem("chats");
+			chatMock.splice(1);
+			setActiveChatId(1);
+			setDeleteAll(false);
+		}
+	}, [reset, newChat, deleteAll]);
+
+	useEffect(() => {
+		setText(activeChat?.text || defautText);
+	}, [activeChatId]);
+
+	useEffect(() => {
+		const handleBeforeUnload = () => {
+			const chatToSave = chatMock.slice(1);
+			localStorage.setItem("chats", JSON.stringify(chatToSave));
+		};
+
+		window.addEventListener("beforeunload", handleBeforeUnload);
+		return () =>
+			window.removeEventListener("beforeunload", handleBeforeUnload);
+	}, [chatMock]);
 
 	return (
 		<>
-			<NavBar setReset={setReset} newChat={setNewChat} />
+			<NavBar
+				setReset={setReset}
+				newChat={setNewChat}
+				setDeleteAll={setDeleteAll}
+			/>
 			<SideBar
-				newChat={newChat}
-				setNewChat={setNewChat}
-				actualSessionChats={saveChat}
+				chatList={chatMock}
+				activeChatId={activeChatId}
+				setActiveChatId={setActiveChatId}
+				isReady={isReady}
 			/>
 			<MarkdownEditor text={text} setText={setText} newChat={newChat} />
 			<Component {...pageProps} />
