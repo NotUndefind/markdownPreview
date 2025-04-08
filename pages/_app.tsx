@@ -1,6 +1,6 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
-import React, { useRef, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 
 //Components
@@ -8,12 +8,7 @@ import NavBar from "@/components/navBar";
 import SideBar from "@/components/sideBar";
 import MarkdownEditor from "@/components/markdownEditor";
 
-export default function App({ Component, pageProps }: AppProps) {
-	const [reset, setReset] = React.useState(false);
-	const [newChat, setNewChat] = React.useState(false);
-	const [title, setTitle] = React.useState("");
-	const idRef = useRef(0);
-	const defautText = `# Markdown syntax guide
+const defautText = `# Markdown syntax guide
 
 ## Headers
 
@@ -68,7 +63,33 @@ alert(message);
 
 This web site is using \`markedjs/marked\`.
 `;
+const chatMock = [
+	{
+		id: 1,
+		title: "Default",
+		text: defautText,
+	},
+];
+
+export default function App({ Component, pageProps }: AppProps) {
+	const [reset, setReset] = React.useState(false);
 	const [text, setText] = useState<string>(defautText);
+	const [newChat, setNewChat] = useState(false);
+	const [deleteAll, setDeleteAll] = useState(false);
+
+	const [activeChatId, setActiveChatId] = useState(chatMock[0].id);
+	const activeChat = chatMock.find((c) => c.id === activeChatId);
+	const [isReady, setIsReady] = useState(false);
+
+	useEffect(() => {
+		const storedChats = localStorage.getItem("chats");
+		if (storedChats) {
+			chatMock.push(...JSON.parse(storedChats));
+			console.log(chatMock);
+		}
+
+		setIsReady(true);
+	}, []);
 
 	useEffect(() => {
 		if (reset) {
@@ -77,24 +98,51 @@ This web site is using \`markedjs/marked\`.
 		}
 
 		if (newChat) {
-			setTitle(text.split("\n")[0]);
-			localStorage.setItem(
-				idRef.current.toString(),
-				JSON.stringify({ text: text, title: title })
-			);
-
+			const title = text.split("\n")[0];
+			chatMock.push({
+				id: chatMock.length + 1,
+				title: title,
+				text: text,
+			});
+			setActiveChatId(chatMock.length);
 			setNewChat(false);
-			idRef.current++;
 		}
-	}, [newChat, reset, defautText, text]);
+
+		if (deleteAll) {
+			localStorage.removeItem("chats");
+			chatMock.splice(1);
+			setActiveChatId(1);
+			setDeleteAll(false);
+		}
+	}, [reset, newChat, deleteAll]);
+
+	useEffect(() => {
+		setText(activeChat?.text || defautText);
+	}, [activeChatId]);
+
+	useEffect(() => {
+		const handleBeforeUnload = () => {
+			const chatToSave = chatMock.slice(1);
+			localStorage.setItem("chats", JSON.stringify(chatToSave));
+		};
+
+		window.addEventListener("beforeunload", handleBeforeUnload);
+		return () =>
+			window.removeEventListener("beforeunload", handleBeforeUnload);
+	}, [chatMock]);
+
 	return (
 		<>
-			<NavBar setReset={setReset} newChat={setNewChat} />
+			<NavBar
+				setReset={setReset}
+				newChat={setNewChat}
+				setDeleteAll={setDeleteAll}
+			/>
 			<SideBar
-				newChat={newChat}
-				setNewChat={setNewChat}
-				title={title}
-				currentId={idRef.current}
+				chatList={chatMock}
+				activeChatId={activeChatId}
+				setActiveChatId={setActiveChatId}
+				isReady={isReady}
 			/>
 			<MarkdownEditor text={text} setText={setText} newChat={newChat} />
 			<Component {...pageProps} />
